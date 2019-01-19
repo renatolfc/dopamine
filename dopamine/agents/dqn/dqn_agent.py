@@ -92,7 +92,8 @@ class DQNAgent(object):
                    epsilon=0.00001,
                    centered=True),
                summary_writer=None,
-               summary_writing_frequency=500):
+               summary_writing_frequency=500,
+               weight_path=None):
     """Initializes the agent and constructs the components of its graph.
 
     Args:
@@ -141,6 +142,7 @@ class DQNAgent(object):
     tf.logging.info('\t tf_device: %s', tf_device)
     tf.logging.info('\t use_staging: %s', use_staging)
     tf.logging.info('\t optimizer: %s', optimizer)
+    tf.logging.info('\t weight_path: %s', weight_path)
 
     self.num_actions = num_actions
     self.observation_shape = tuple(observation_shape)
@@ -161,6 +163,7 @@ class DQNAgent(object):
     self.optimizer = optimizer
     self.summary_writer = summary_writer
     self.summary_writing_frequency = summary_writing_frequency
+    self.weight_path = weight_path
 
     with tf.device(tf_device):
       # Create a placeholder for the state input to the DQN network.
@@ -204,11 +207,31 @@ class DQNAgent(object):
     Returns:
       net: _network_type object containing the tensors output by the network.
     """
+
     net = tf.cast(state, tf.float32)
     net = tf.div(net, 255.)
-    net = slim.conv2d(net, 32, [8, 8], stride=4)
-    net = slim.conv2d(net, 64, [4, 4], stride=2)
-    net = slim.conv2d(net, 64, [3, 3], stride=1)
+
+    if self.weight_path:
+        with np.load(self.weight_path) as weights:
+            w = weights['encoder.0.weight']
+            b = weights['encoder.0.bias']
+            net = slim.conv2d(net, 32, [8, 8], stride=4, trainable=False,
+                              weights_initializer=tf.constant_initializer(w),
+                              biases_initializer=tf.constant_initializer(b))
+            w = weights['encoder.2.weight']
+            b = weights['encoder.2.bias']
+            net = slim.conv2d(net, 64, [4, 4], stride=2, trainable=False,
+                              weights_initializer=tf.constant_initializer(w),
+                              biases_initializer=tf.constant_initializer(b))
+            w = weights['encoder.4.weight']
+            b = weights['encoder.4.bias']
+            net = slim.conv2d(net, 64, [3, 3], stride=1, trainable=False,
+                              weights_initializer=tf.constant_initializer(w),
+                              biases_initializer=tf.constant_initializer(b))
+    else:
+        net = slim.conv2d(net, 32, [8, 8], stride=4)
+        net = slim.conv2d(net, 64, [4, 4], stride=2)
+        net = slim.conv2d(net, 64, [3, 3], stride=1)
     net = slim.flatten(net)
     net = slim.fully_connected(net, 512)
     q_values = slim.fully_connected(net, self.num_actions, activation_fn=None)

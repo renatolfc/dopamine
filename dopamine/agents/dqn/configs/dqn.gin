@@ -16,6 +16,7 @@ DQNAgent.epsilon_eval = 0.001
 DQNAgent.epsilon_decay_period = 250000  # agent steps
 DQNAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
 DQNAgent.optimizer = @tf.train.RMSPropOptimizer()
+DQNAgent.weight_path = 'weights/encoder-weights-mse.npz'
 
 tf.train.RMSPropOptimizer.learning_rate = 0.00025
 tf.train.RMSPropOptimizer.decay = 0.95
