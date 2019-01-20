@@ -18,7 +18,7 @@ RainbowAgent.epsilon_decay_period = 1000000  # agent steps
 RainbowAgent.replay_scheme = 'uniform'
 RainbowAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
 RainbowAgent.optimizer = @tf.train.AdamOptimizer()
-DQNAgent.weight_path = 'weights/encoder-weights-mse.npz'
+RainbowAgent.weight_path = 'weights/encoder-weights-mse.npz'
 
 tf.train.AdamOptimizer.learning_rate = 0.00025
 tf.train.AdamOptimizer.epsilon = 0.0003125
