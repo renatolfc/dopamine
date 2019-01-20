@@ -18,6 +18,7 @@ RainbowAgent.epsilon_decay_period = 250000  # agent steps
 RainbowAgent.replay_scheme = 'prioritized'
 RainbowAgent.tf_device = '/gpu:0'  # use '/cpu:*' for non-GPU version
 RainbowAgent.optimizer = @tf.train.AdamOptimizer()
+DQNAgent.weight_path = 'weights/encoder-weights-mse.npz'
 
 # Note these parameters are different from C51's.
 tf.train.AdamOptimizer.learning_rate = 0.0000625

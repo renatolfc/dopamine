@@ -78,7 +78,8 @@ class RainbowAgent(dqn_agent.DQNAgent):
                optimizer=tf.train.AdamOptimizer(
                    learning_rate=0.00025, epsilon=0.0003125),
                summary_writer=None,
-               summary_writing_frequency=500):
+               summary_writing_frequency=500,
+               weight_path=None):
     """Initializes the agent and constructs the components of its graph.
 
     Args:
@@ -143,7 +144,8 @@ class RainbowAgent(dqn_agent.DQNAgent):
         use_staging=use_staging,
         optimizer=self.optimizer,
         summary_writer=summary_writer,
-        summary_writing_frequency=summary_writing_frequency)
+        summary_writing_frequency=summary_writing_frequency,
+        weight_path=weight_path)
 
   def _get_network_type(self):
     """Returns the type of the outputs of a value distribution network.
@@ -168,12 +170,31 @@ class RainbowAgent(dqn_agent.DQNAgent):
 
     net = tf.cast(state, tf.float32)
     net = tf.div(net, 255.)
-    net = slim.conv2d(
-        net, 32, [8, 8], stride=4, weights_initializer=weights_initializer)
-    net = slim.conv2d(
-        net, 64, [4, 4], stride=2, weights_initializer=weights_initializer)
-    net = slim.conv2d(
-        net, 64, [3, 3], stride=1, weights_initializer=weights_initializer)
+
+    if self.weight_path:
+        with np.load(self.weight_path) as weights:
+            w = weights['encoder.0.weight']
+            b = weights['encoder.0.bias']
+            net = slim.conv2d(net, 32, [8, 8], stride=4, trainable=False,
+                              weights_initializer=tf.constant_initializer(w),
+                              biases_initializer=tf.constant_initializer(b))
+            w = weights['encoder.2.weight']
+            b = weights['encoder.2.bias']
+            net = slim.conv2d(net, 64, [4, 4], stride=2, trainable=False,
+                              weights_initializer=tf.constant_initializer(w),
+                              biases_initializer=tf.constant_initializer(b))
+            w = weights['encoder.4.weight']
+            b = weights['encoder.4.bias']
+            net = slim.conv2d(net, 64, [3, 3], stride=1, trainable=False,
+                              weights_initializer=tf.constant_initializer(w),
+                              biases_initializer=tf.constant_initializer(b))
+    else:
+        net = slim.conv2d(
+            net, 32, [8, 8], stride=4, weights_initializer=weights_initializer)
+        net = slim.conv2d(
+            net, 64, [4, 4], stride=2, weights_initializer=weights_initializer)
+        net = slim.conv2d(
+            net, 64, [3, 3], stride=1, weights_initializer=weights_initializer)
     net = slim.flatten(net)
     net = slim.fully_connected(
         net, 512, weights_initializer=weights_initializer)
